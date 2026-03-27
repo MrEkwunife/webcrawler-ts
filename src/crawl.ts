@@ -1,5 +1,13 @@
 import { JSDOM } from "jsdom";
 
+type ExtractedPageData = {
+  url: string;
+  heading: string;
+  firstParagraph: string;
+  outgoingLinks: Array<string>;
+  imageURLs: Array<string>;
+};
+
 export function normalizeURL(url: string): string | null {
   try {
     const urlObj = new URL(url);
@@ -38,6 +46,46 @@ export function getFirstParagraphFromHTML(html: string): string {
   return pTextContent;
 }
 
-// export function getURLsFromHTML(html: string, baseURL: string): string[] {
-//   return [];
+export function getURLsFromHTML(html: string, baseURL: string): string[] {
+  const urls: string[] = [];
+  const dom = new JSDOM(html);
+  const allAnchorsEl = Array.from(dom.window.document.querySelectorAll("a"));
+  allAnchorsEl.forEach((a) => {
+    const href = a.getAttribute("href");
+    if (href) {
+      urls.push(new URL(href, baseURL).href);
+    }
+  });
+
+  return urls;
+}
+
+export function getImagesFromHTML(html: string, baseURL: string): string[] {
+  const dom = new JSDOM(html);
+  const imgs = dom.window.document.querySelectorAll("img");
+
+  return Array.from(imgs)
+    .map((img) => {
+      const src = img.getAttribute("src");
+      if (!src) return null;
+      try {
+        return new URL(src, baseURL).href;
+      } catch {
+        return null;
+      }
+    })
+    .filter((src): src is string => src !== null);
+}
+
+// export function extractPageData(
+//   html: string,
+//   pageURL: string,
+// ): ExtractedPageData {
+//   return {
+//     url: pageURL,
+//     heading: getHeadingFromHTML(html),
+//     firstParagraph: getFirstParagraphFromHTML(html),
+//     outgoingLinks: getURLsFromHTML(html, pageURL),
+//     imageURLs: getURLsFromHTML(html, pageURL),
+//   };
 // }

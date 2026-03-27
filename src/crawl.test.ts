@@ -3,6 +3,8 @@ import {
   normalizeURL,
   getHeadingFromHTML,
   getFirstParagraphFromHTML,
+  getURLsFromHTML,
+  getImagesFromHTML,
 } from "./crawl";
 
 describe("normalizeURL", () => {
@@ -206,5 +208,108 @@ describe("getFirstParagraphFromHTML", () => {
     const actual = getFirstParagraphFromHTML(inputBody);
     const notExpected = "Outside paragraph.";
     expect(actual).not.toEqual(notExpected);
+  });
+});
+
+describe("getURLsFromHTML", () => {
+  test("returns absolute path link", () => {
+    const inputURL = "https://crawler-test.com";
+    const inputBody = `<html><body><a href="/path/one"><span>Boot.dev</span></a></body></html>`;
+
+    const actual = getURLsFromHTML(inputBody, inputURL);
+    const expected = ["https://crawler-test.com/path/one"];
+
+    expect(actual).toEqual(expected);
+  });
+
+  test("returns all links in DOM", () => {
+    const inputURL = "https://crawler-test.com";
+    const inputBody = `
+        <html><body>
+            <a href="/path/one"><span>Boot.dev</span></a>
+            <a href="/path/two"><span>Boot.part2</span></a>
+            <a href="/path/three"><span>Boot.part3</span></a>
+        </body></html>
+    `;
+
+    const actual = getURLsFromHTML(inputBody, inputURL);
+    const expected = [
+      "https://crawler-test.com/path/one",
+      "https://crawler-test.com/path/two",
+      "https://crawler-test.com/path/three",
+    ];
+
+    expect(actual).toEqual(expected);
+  });
+
+  test("returns an empty array if no anchor tag is found", () => {
+    const inputURL = "https://crawler-test.com";
+    const inputBody = `
+        <html><body>
+            <h1>Boot.dev</h1>
+            <p>Learn programming the best way</p>
+        </body></html>
+    `;
+
+    const actual = getURLsFromHTML(inputBody, inputURL);
+    expect(actual).toEqual([]);
+  });
+
+  test("with no hrefs", () => {
+    const inputURL = "https://crawler-test.com";
+    const inputBody = `
+        <html><body>
+            <a href="/path/one"><span>Boot.dev</span></a>
+            <a><span>Boot.part2</span></a>
+            <a><span>Boot.part3</span></a>
+        </body></html>
+    `;
+
+    const actual = getURLsFromHTML(inputBody, inputURL);
+    const expected = ["https://crawler-test.com/path/one"];
+    expect(actual).toEqual(expected);
+  });
+});
+
+describe("getImagesFromHTML", () => {
+  test("returns absolte path link", () => {
+    const inputURL = "https://crawler-test.com";
+    const inputBody = `<html><body><img src="/logo.png" alt="Logo"></body></html>`;
+
+    const actual = getImagesFromHTML(inputBody, inputURL);
+    const expected = ["https://crawler-test.com/logo.png"];
+
+    expect(actual).toEqual(expected);
+  });
+
+  test("returns all images", () => {
+    const inputURL = "https://crawler-test.com";
+    const inputBody = `<html><body>
+        <img src="/logo.png" alt="Logo">
+        <img src="/logo1.png" alt="Logo">
+        <img src="/logo2.png" alt="Logo">
+    </body></html>`;
+
+    const actual = getImagesFromHTML(inputBody, inputURL);
+    const expected = [
+      "https://crawler-test.com/logo.png",
+      "https://crawler-test.com/logo1.png",
+      "https://crawler-test.com/logo2.png",
+    ];
+
+    expect(actual).toEqual(expected);
+  });
+
+  test("with no src", () => {
+    const inputURL = "https://crawler-test.com";
+    const inputBody = `<html><body>
+        <img alt="Logo">
+        <img src="/logo.png" alt="Logo">
+        <img alt="Logo">
+    </body></html>`;
+
+    const actual = getImagesFromHTML(inputBody, inputURL);
+    const expected = ["https://crawler-test.com/logo.png"];
+    expect(actual).toEqual(expected);
   });
 });
