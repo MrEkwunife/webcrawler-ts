@@ -89,3 +89,29 @@ export function extractPageData(
     imageURLs: getImagesFromHTML(html, pageURL),
   };
 }
+
+export async function getHTML(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "BootCrawler/1.0",
+      },
+    });
+
+    if (!res.ok) {
+      console.error(`Failed to fetch HTML: ${res.status} ${res.statusText}`);
+      return null;
+    }
+
+    const contentType = res.headers.get("Content-Type");
+    if (!contentType?.includes("text/html")) {
+      console.error(`Unexpected content type: ${contentType}`);
+      return null;
+    }
+
+    return await res.text();
+  } catch (err) {
+    console.error(`Network error fetching ${url}:`, err);
+    return null;
+  }
+}
