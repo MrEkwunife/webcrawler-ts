@@ -38,12 +38,12 @@ export function getHeadingFromHTML(html: string): string {
 
 export function getFirstParagraphFromHTML(html: string): string {
   const dom = new JSDOM(html);
-  const mainEl = dom.window.document.querySelector("main");
-  const pTextContent = mainEl?.querySelector("p")?.textContent;
-  if (!pTextContent) {
-    return "";
-  }
-  return pTextContent;
+  const doc = dom.window.document;
+  const pTextContent =
+    doc.querySelector("main p")?.textContent ??
+    doc.querySelector("p")?.textContent;
+
+  return pTextContent?.trim() ?? "";
 }
 
 export function getURLsFromHTML(html: string, baseURL: string): string[] {
@@ -77,15 +77,15 @@ export function getImagesFromHTML(html: string, baseURL: string): string[] {
     .filter((src): src is string => src !== null);
 }
 
-// export function extractPageData(
-//   html: string,
-//   pageURL: string,
-// ): ExtractedPageData {
-//   return {
-//     url: pageURL,
-//     heading: getHeadingFromHTML(html),
-//     firstParagraph: getFirstParagraphFromHTML(html),
-//     outgoingLinks: getURLsFromHTML(html, pageURL),
-//     imageURLs: getURLsFromHTML(html, pageURL),
-//   };
-// }
+export function extractPageData(
+  html: string,
+  pageURL: string,
+): ExtractedPageData {
+  return {
+    url: pageURL,
+    heading: getHeadingFromHTML(html),
+    firstParagraph: getFirstParagraphFromHTML(html),
+    outgoingLinks: getURLsFromHTML(html, pageURL),
+    imageURLs: getImagesFromHTML(html, pageURL),
+  };
+}
